@@ -18,7 +18,9 @@ function generateMarkdownFromDeclaration(options = { declaration: {}, tagTemplat
     if (options.tagTemplates) {
         Object.keys(options.tagTemplates).forEach(tag => {
             const template = options.tagTemplates[tag];
+
             if (options.declaration[tag] && Array.isArray(options.declaration[tag]) && options.declaration[tag].length > 0) {
+                
                 if (template.title) {
                     markdown += `\n## ${template.title || ''}:\n`;
                 }

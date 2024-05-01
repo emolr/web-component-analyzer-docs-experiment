@@ -45,7 +45,7 @@ export default {
                 example: {
                     mappedName: 'examples',
                     isArray: true,
-                }
+                },
             }
           }),
           toMarkdownFiles({
@@ -54,13 +54,12 @@ export default {
             tagTemplates: {
               examples: {
                 title: 'Examples',
-                template: (example) => {
-                  return `### ${example.name} \n ${example.description}`;
+                template: (tag) => {
+                  return `### ${tag.name} \n ${tag.description}`;
                 },
               }
             }
           }),
-        // ...cemToMarkdownReadme({})
     ],
     overrideModuleCreation: ({ts, globs}) => {
         const program = getTsProgram(ts, globs, "tsconfig.json");

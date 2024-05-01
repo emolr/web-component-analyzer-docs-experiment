@@ -26,6 +26,8 @@ export type MyElementSize = 'small' | 'medium' | 'large';
  *
  * @tag my-element
  * @tagname my-element
+ * @lol 
+ * This element is deprecated
  */
 @customElement('my-element')
 export class MyElement extends LitElement {

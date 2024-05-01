@@ -33,6 +33,7 @@ node.jsDoc?.forEach(jsDoc => {
 
       const propName = tagOptions.mappedName || tagName;
       const existingProp = component[propName];
+      
       // Extract the name and description from tag.comment
       const match = tag.comment.match(/^(.+) -\s?(.*)$/s);
       const cemTagName = match ? match[1].trim() : '';
@@ -44,12 +45,12 @@ node.jsDoc?.forEach(jsDoc => {
         description: cemDescription,
         type: tag.typeExpression ? { text: tag.typeExpression.getText() } : undefined
       };
-
       if(!existingProp && tagOptions.isArray) {
         component[propName] = [cemTag];
       } else if (Array.isArray(component[propName])) {
         component[propName].push(cemTag);
       } else if (existingProp && !Array.isArray(component[propName])) {
+        
         component[propName] = [component[propName], cemTag];
       } else {
         component[propName] = cemTag;
@@ -81,13 +82,15 @@ node.jsDoc?.forEach(jsDoc => {
                   description: cemDescription,
                   type: tag.typeExpression ? { text: tag.typeExpression.getText() } : undefined
                 };
-      
-                if (!existingProp) {
+                
+                if(!existingProp && userOptions.tags[tagName]?.isArray) {
                   component[propName] = [cemTag];
                 } else if (Array.isArray(component[propName])) {
                   component[propName].push(cemTag);
-                } else {
+                } else if (existingProp && !Array.isArray(component[propName])) {
                   component[propName] = [component[propName], cemTag];
+                } else {
+                  component[propName] = cemTag;
                 }
               }
             });
