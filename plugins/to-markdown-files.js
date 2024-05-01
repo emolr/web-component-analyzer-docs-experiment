@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-function generateMarkdownFromDeclaration(options = { declaration: {}, exampleTemplateFn: () => ''}) {
+function generateMarkdownFromDeclaration(options = { declaration: {}, tagTemplates: {}}) {
     let markdown = ``;
     if (options.declaration.tagName) {
         markdown += `# ${options.declaration.tagName}\n`;
@@ -15,16 +15,31 @@ function generateMarkdownFromDeclaration(options = { declaration: {}, exampleTem
         markdown += `\n${options.declaration.summary || ''}\n`;
     }
 
-    if (options.declaration.examples && options.declaration.examples.length > 0) {
-        // markdown += `\n## Examples:\n`;
-        options.declaration.examples.forEach((example) => {
-            if (example.name) {
-                markdown += `\n### ${example.name}\n`;
-            }
-            if (options.exampleTemplateFn) {
-                markdown += `\n${options.exampleTemplateFn(example.description)}\n`;
-            } else {
-                markdown += `\n${example.description}\n`;
+    if (options.tagTemplates) {
+        Object.keys(options.tagTemplates).forEach(tag => {
+            const template = options.tagTemplates[tag];
+            if (options.declaration[tag] && Array.isArray(options.declaration[tag]) && options.declaration[tag].length > 0) {
+                if (template.title) {
+                    markdown += `\n## ${template.title || ''}:\n`;
+                }
+
+                options.declaration[tag].forEach((item) => {
+                    if (template.template) {
+                        markdown += `\n${template.template(item)}\n`;
+                    } else {
+                        markdown += `\n${item}\n`;
+                    }
+                });
+            } else if (options.declaration[tag]) {
+                if (template.title) {
+                    markdown += `\n## ${template.title || ''}:\n`;
+                }
+
+                if (template.template) {
+                    markdown += `\n${template.template(options.declaration[tag])}\n`;
+                } else {
+                    markdown += `\n${options.declaration[tag]}\n`;
+                }
             }
         });
     }
@@ -92,7 +107,7 @@ function generateMarkdownFromDeclaration(options = { declaration: {}, exampleTem
     return markdown + api;
 }
 
-export default function toMarkdownFiles(options = { outDir: './markdown', clearDir: false, exampleTemplateFn: () => ''}) {
+export default function toMarkdownFiles(options = { outDir: './markdown', clearDir: false, tagTemplates: {}}) {
     return {
         // Make sure to always give your plugin a name! This helps when debugging
         name: 'to-markdown-files',
@@ -119,7 +134,7 @@ export default function toMarkdownFiles(options = { outDir: './markdown', clearD
             }
             
             declarations.forEach(declaration => {
-                const markdownContent = generateMarkdownFromDeclaration({declaration, exampleTemplateFn: options.exampleTemplateFn});
+                const markdownContent = generateMarkdownFromDeclaration({declaration, tagTemplates: options.tagTemplates});
                 const filePath = path.join(options.outDir, `${toDashCase(declaration.name)}.md`);
                 fs.writeFileSync(filePath, markdownContent);
             });

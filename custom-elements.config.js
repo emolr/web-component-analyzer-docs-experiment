@@ -45,17 +45,20 @@ export default {
                 example: {
                     mappedName: 'examples',
                     isArray: true,
-                },
-                test: {
-                  mappedName: 'tests',
-                  isArray: true,
                 }
             }
           }),
           toMarkdownFiles({
             outDir: './docs',
             clearDir: false,
-            exampleTemplateFn: (example) => `<VueLive :code="\`${example.replaceAll('\"', '\'')}\`" />`,
+            tagTemplates: {
+              examples: {
+                title: 'Examples',
+                template: (example) => {
+                  return `### ${example.name} \n ${example.description}`;
+                },
+              }
+            }
           }),
         // ...cemToMarkdownReadme({})
     ],

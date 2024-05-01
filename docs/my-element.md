@@ -2,19 +2,27 @@
 
 This is MyElement
 
-### docsHint
+## Examples:
 
-<VueLive :code="`<my-element docs-hint='Hello'></my-element>`" />
+### docsHint 
+ ```html
+<my-element docs-hint="Hello"></my-element>
+```
 
-### count
+### count 
+ ```html
+<my-element count="5"></my-element>
+```
 
-<VueLive :code="`<my-element count='5'></my-element>`" />
-
-### size
-
-<VueLive :code="`<my-element size='small'></my-element>
-<my-element size='medium'></my-element>
-<my-element size='large'></my-element>`" />
+### size 
+ ```html
+<my-element size="small"></my-element>
+<my-element size="medium"></my-element>
+<my-element size="large"></my-element>
+```
+```javascript
+document.querySelector('my-element').size = 'small'
+```
 
 ## Slots:
 

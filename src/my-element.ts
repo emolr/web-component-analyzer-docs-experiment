@@ -33,7 +33,9 @@ export class MyElement extends LitElement {
    * Copy for the read the docs hint.
    * 
    * @example
+   * ```html
    * <my-element docs-hint="Hello"></my-element>
+   * ```
    */
   @property({ attribute: 'docs-hint'})
   docsHint = 'Click on the Vite and Lit logos to learn more'
@@ -42,7 +44,9 @@ export class MyElement extends LitElement {
    * The number of times the button has been clicked.
    * 
    * @example
+   * ```html
    * <my-element count="5"></my-element>
+   * ```
    */
   @property({ type: Number })
   count = 0
@@ -51,9 +55,14 @@ export class MyElement extends LitElement {
    * Sets the size of the element.
    * 
    * @example
+   * ```html
    * <my-element size="small"></my-element>
    * <my-element size="medium"></my-element>
    * <my-element size="large"></my-element>
+   * ```
+   * ```javascript
+   * document.querySelector('my-element').size = 'small'
+   * ```
    */
   @property({ attribute: 'my-size'})
   size: MyElementSize = 'medium'
