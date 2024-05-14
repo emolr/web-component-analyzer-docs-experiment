@@ -1,15 +1,7 @@
 // Modified from https://github.com/break-stuff/cem-tools/blob/main/packages/custom-jsdoc-tags/src/cem-plugin.ts
 // modified to work with custom tags on classes and also properties
 
-import { parse } from 'comment-parser';
-
-let userOptions = {
-  tags: {}
-};
-
 export function customJSDocTagsPlugin(options = { tags: {} }) {
-  userOptions = options;
-
   return {
     name: "custom-jsdoc-tags-plugin",
     analyzePhase({ ts, node, moduleDoc }) {
@@ -19,19 +11,20 @@ export function customJSDocTagsPlugin(options = { tags: {} }) {
 
       const className = node.name.getText();
 const component = moduleDoc?.declarations?.find(declaration => declaration.name === className);
-const customTags = Object.keys(userOptions.tags || {});
+const customTags = Object.keys(options.tags || {});
 
 node.jsDoc?.forEach(jsDoc => {
   jsDoc?.tags?.forEach(tag => {
     const tagName = tag.tagName.getText();
-
+    
     if (customTags.includes(tagName)) {
-      const tagOptions  = userOptions.tags[tagName];
+      const tagOptions  = options.tags[tagName];
       if(!tagOptions) {
         return;
       }
 
       const propName = tagOptions.mappedName || tagName;
+      
       const existingProp = component[propName];
       
       // Extract the name and description from tag.comment
@@ -71,8 +64,7 @@ node.jsDoc?.forEach(jsDoc => {
             jsDoc.tags?.forEach(tag => {
               const tagName = tag.tagName.getText();
               if (customTags.includes(tagName)) {
-                const propName = userOptions.tags[tagName].mappedName;
-                const existingProp = component[propName];
+                const propName = options.tags[tagName].mappedName;
                 // Extract the name and description from tag.comment
                 const match = tag.comment.match(/^(.+) -\s?(.*)$/s);
                 const cemTagName = match ? match[1].trim() : member.name.getText();
@@ -82,16 +74,21 @@ node.jsDoc?.forEach(jsDoc => {
                   description: cemDescription,
                   type: tag.typeExpression ? { text: tag.typeExpression.getText() } : undefined
                 };
-                
-                if(!existingProp && userOptions.tags[tagName]?.isArray) {
-                  component[propName] = [cemTag];
-                } else if (Array.isArray(component[propName])) {
-                  component[propName].push(cemTag);
-                } else if (existingProp && !Array.isArray(component[propName])) {
-                  component[propName] = [component[propName], cemTag];
+
+                const memberIndex = component.members.findIndex(_member => _member.name === member.name.getText())
+                let tagEntry = null;
+                if (options.tags[tagName]?.isArray) {
+                  tagEntry = component.members[memberIndex].customTags?.[tagName] ? [...component.members[memberIndex].customTags[tagName]]: [cemTag];
                 } else {
-                  component[propName] = cemTag;
+                  tagEntry = cemTag;
                 }
+
+                component.members[memberIndex] = {
+                  ...component.members[memberIndex],
+                  ...{
+                    [propName ?? tagName]: tagEntry
+                  },
+                };
               }
             });
           });

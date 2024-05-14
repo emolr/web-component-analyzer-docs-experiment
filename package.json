@@ -20,13 +20,16 @@
     "cem-plugin-reactify": "^0.0.2",
     "comment-parser": "^1.4.1",
     "custom-elements-manifest-inheritance": "^1.0.0",
+    "ejs": "^3.1.10",
     "highlight.js": "^11.9.0",
     "lit": "^3.1.2",
+    "prettier": "^3.2.5",
     "vue-highlight-code": "^0.2.0",
     "vue-live": "^2.5.4"
   },
   "devDependencies": {
     "@custom-elements-manifest/analyzer": "^0.9.8",
+    "fast-glob": "^3.3.2",
     "typescript": "^5.2.2",
     "vite": "^5.2.0",
     "vitepress": "^1.1.4"
