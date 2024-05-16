@@ -21,6 +21,7 @@ export function outputDeclaration(options = { out: './markdown/*.md', clear: fal
 
             // Clear the directory if clearDir option is true
             if (options.clear) {
+                console.log('Clearing directory', baseDir)
                 const files = fs.readdirSync(baseDir);
                 for (const file of files) {
                     fs.unlinkSync(path.join(baseDir, file));
@@ -33,7 +34,7 @@ export function outputDeclaration(options = { out: './markdown/*.md', clear: fal
                     "*",
                     declaration.tagName,
                 );
-                
+
                 fs.writeFileSync(outputPathWithReplacedWildcards, formattedContent);
             });
         },

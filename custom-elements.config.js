@@ -26,6 +26,50 @@ import { format } from 'prettier';
 
 // Documentation: https://custom-elements-manifest.open-wc.org/analyzer/getting-started/
 
+function escapeMarkdown(text) {
+  const escapeChars = ['\\', '`', '*', '{', '}', '[', ']', '(', ')', '#', '+', '-', '.', '!', '_', '>', '|'];
+  return text.split('').map(char => escapeChars.includes(char) ? '\\' + char : char).join('');
+}
+
+function getMarkdownTable (data, columns) {
+  if (data.length === 0) {
+    return '';
+  }
+  const header = '| ' + columns.map(column => typeof column === 'string' ? column : column.name).join(' | ') + ' |';
+  const separator = '| ' + columns.map(() => '---').join(' | ') + ' |';
+  
+  const rows = data.map(item => '| ' + columns.map(column => {
+    const key = typeof column === 'string' ? column : column.name;
+    const value = item[key] !== undefined ? item[key] : '';
+    return typeof column === 'string' ? escapeMarkdown(value) : escapeMarkdown(column.value ? column.value(item) : '');
+  }).join(' | ') + ' |');
+
+  return [header, separator, ...rows].join('\n');
+}
+
+function extractCodeBlock(content, language) {
+  const regex = new RegExp("```" + language + "[\\s\\S]*?```", "g");
+  const matches = content.match(regex);
+  if (matches) {
+    return matches.map(match => match.replace("```" + language, "").replace("```", "").trim());
+  }
+  return [];
+}
+
+function mapAttributeToPropertyTable(data) {
+  return data
+    .filter(item => !item.hasOwnProperty('fieldName')) // filter out objects that contain "fieldName"
+    .map(item => ({
+      kind: 'field',
+      name: item.name,
+      type: item.type,
+      default: item.default,
+      description: item.description,
+      attribute: item.name,
+      expandedType: item.expandedType
+    }));
+}
+
 export default {
   globs: ["**/src/**/*.ts"],
   exclude: [
@@ -47,27 +91,46 @@ export default {
       tags: {
         example: {
           mappedName: 'examples',
-          isArray: true,
-        }
+          isArray: true
+        },
+        usage: {}
       }
     }),
     outputDeclaration({
       out: './docs/elements/*.md',
-      clear: true,
+      clear: false,
       templateFn: async (data) => {
         let content = `
           # ${data.name}
 
-          ${data.description}
+          ${data.description ? data.description : ''}
+          ${data.summary ? data.summary : ''}
 
-          ${data.members.filter(member => member.kind === 'field').length > 0 ? '## Properties' : ''}
+          ${data.usage ? '## Usage' : ''}
+          ${data.usage ? data.usage.description : ''}
+
+          ${data.members.filter(member => member.kind === 'field').length > 0 ? '## Example' : ''}
           ${data.members.filter(member => member.kind === 'field').map(member => `
-            ## ${member.name}
+            ### ${member.name}
             ${member.description}
 
             ${member.examples ? member.examples.map(example => {
               return `
                 <code-example>
+                ${extractCodeBlock(example.description, 'html').length ? `
+                  ${extractCodeBlock(example.description, 'html').map(html => `
+                    <div>
+                      ${html}
+                    </div>
+                  `).join('\n')}
+                ` : ''}
+                ${extractCodeBlock(example.description, 'javascript').length ? `
+                ${extractCodeBlock(example.description, 'javascript').map(javascript => `
+                  <template data-type="script">
+                    ${javascript}
+                  </template>
+                `).join('\n')}
+              ` : ''}
 
                   ${example.description}
 
@@ -75,13 +138,33 @@ export default {
               `
             }).join('\n') : ''}
           `).join('\n')}
-        `
-        // Remove leading whitespaces from each line
-        content = content.split('\n').map(line => line.trimStart()).join('\n');
 
+          ${data.members.length > 0 ? '## Properties / Attributes' : ''}
+          ${getMarkdownTable([...data.members, ...mapAttributeToPropertyTable(data.attributes)], ['name', 'attribute', {
+            name: 'type',
+            value: column => {
+              return column.expandedType ? column.expandedType.text : column.type.text;
+            }
+          }, 'default', 'description'])}
+
+          ${data.slots.length > 0 ? '## CSS Slots' : ''}
+          ${getMarkdownTable(data.slots, ['name', 'description'])}
+
+          ${data.cssProperties.length > 0 ? '## CSS Custom Properties' : ''}
+          ${getMarkdownTable(data.cssProperties, ['name', 'description', 'default'])}
+
+          ${data.cssParts.length > 0 ? '## CSS Parts' : ''}
+          ${getMarkdownTable(data.cssParts, ['name', 'description'])}
+
+        `;
+
+        
+        // Remove leading white spaces from each line
+        content = content.split('\n').map(line => line.trimStart()).join('\n');
+        
         // Remove multiple empty lines
         content = content.replace(/\n{3,}/g, '\n\n');
-
+        
         const formattedContent = await format(content, { parser: 'markdown' });
 
         return formattedContent;

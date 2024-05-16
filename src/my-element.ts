@@ -4,6 +4,25 @@ import { customElement, property } from 'lit/decorators.js'
 export type MyElementSize = 'small' | 'medium' | 'large';
 
 /**
+ * @summary This is MyElement
+ * 
+ * @usage
+ * ```bash
+ * npm install '@org/elements'
+ * ```
+ * 
+ * Import the element via:
+ * 
+ * ```javascript
+ * import '@org/elements/my-element.js';
+ * ```
+ * 
+ * When looking for the types you can import the types via:
+ * 
+ * ```javascript
+ * import type { MyElement } from '@org/elements';
+ * ```
+ *  
  * @attr {boolean} disabled - disables the element
  * @attribute {string} foo - description for foo
  *
@@ -56,12 +75,14 @@ export class MyElement extends LitElement {
    * <my-element size="small"></my-element>
    * <my-element size="medium"></my-element>
    * <my-element size="large"></my-element>
+   * <my-element id="element-change"></my-element>
    * ```
    * ```javascript
-   * document.querySelector('my-element').size = 'small'
+   * document.querySelector('#element-change').size = 'small';
+   * console.log(document.querySelector('#element-change'));
    * ```
    */
-  @property({ attribute: 'my-size'})
+  @property({ attribute: 'my-size', reflect: true})
   size: MyElementSize = 'medium'
 
   render() {
@@ -77,6 +98,7 @@ export class MyElement extends LitElement {
       margin: 0 auto;
       padding: 2rem;
       text-align: center;
+      display: block;
     }
 
     .logo {
