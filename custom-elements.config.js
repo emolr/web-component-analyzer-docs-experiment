@@ -27,6 +27,7 @@ import { format } from 'prettier';
 // Documentation: https://custom-elements-manifest.open-wc.org/analyzer/getting-started/
 
 function escapeMarkdown(text) {
+  if (!text) return '';
   const escapeChars = ['\\', '`', '*', '{', '}', '[', ']', '(', ')', '#', '+', '-', '.', '!', '_', '>', '|'];
   return text.split('').map(char => escapeChars.includes(char) ? '\\' + char : char).join('');
 }
@@ -83,7 +84,6 @@ export default {
   litelement: true,
   packagejson: false,
   plugins: [
-    // jsdocExamplePlugin(),
     expandTypesPlugin(),
     moduleFileExtensionsPlugin(),
     cemInheritancePlugin(),
@@ -102,21 +102,45 @@ export default {
       templateFn: async (data) => {
         let content = `
           # ${data.name}
-
           ${data.description ? data.description : ''}
           ${data.summary ? data.summary : ''}
 
           ${data.usage ? '## Usage' : ''}
           ${data.usage ? data.usage.description : ''}
 
-          ${data.members.filter(member => member.kind === 'field').length > 0 ? '## Example' : ''}
+          ${data.members.filter(member => member.kind === 'field').length > 0 || data.examples?.length > 0 ? '## Example' : ''}
+
+          ${data.examples?.map(example => {
+            return `
+              <code-example v-pre>
+              ${extractCodeBlock(example.description, 'html').length ? `
+                ${extractCodeBlock(example.description, 'html').map(html => `
+                  <div>
+                    ${html}
+                  </div>
+                `).join('\n')}
+              ` : ''}
+              ${extractCodeBlock(example.description, 'javascript').length ? `
+              ${extractCodeBlock(example.description, 'javascript').map(javascript => `
+                <template data-type="script">
+                  ${javascript}
+                </template>
+              `).join('\n')}
+            ` : ''}
+
+                ${example.description}
+
+              </code-example>
+            `
+          }).join('\n')}
+
           ${data.members.filter(member => member.kind === 'field').map(member => `
             ### ${member.name}
             ${member.description}
 
             ${member.examples ? member.examples.map(example => {
               return `
-                <code-example>
+                <code-example v-pre>
                 ${extractCodeBlock(example.description, 'html').length ? `
                   ${extractCodeBlock(example.description, 'html').map(html => `
                     <div>
@@ -143,12 +167,15 @@ export default {
           ${getMarkdownTable([...data.members, ...mapAttributeToPropertyTable(data.attributes)], ['name', 'attribute', {
             name: 'type',
             value: column => {
-              return column.expandedType ? column.expandedType.text : column.type.text;
+              return column.expandedType ? column.expandedType.text : column.type?.text;
             }
           }, 'default', 'description'])}
 
           ${data.slots.length > 0 ? '## CSS Slots' : ''}
           ${getMarkdownTable(data.slots, ['name', 'description'])}
+
+          ${data.events.length > 0 ? '## Events' : ''}
+          ${getMarkdownTable(data.events, ['name', 'description', { name: 'type', value: column => column.type?.text }])}
 
           ${data.cssProperties.length > 0 ? '## CSS Custom Properties' : ''}
           ${getMarkdownTable(data.cssProperties, ['name', 'description', 'default'])}

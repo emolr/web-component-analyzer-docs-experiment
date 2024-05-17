@@ -2,6 +2,7 @@ import { LitElement, css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 
 export type MyElementSize = 'small' | 'medium' | 'large';
+export type MyElementEvent = CustomEvent<{ count: number }>;
 
 /**
  * @summary This is MyElement
@@ -22,6 +23,11 @@ export type MyElementSize = 'small' | 'medium' | 'large';
  * ```javascript
  * import type { MyElement } from '@org/elements';
  * ```
+ * 
+ * @example
+ * ```html
+ * <my-element></my-element>
+ * ```
  *  
  * @attr {boolean} disabled - disables the element
  * @attribute {string} foo - description for foo
@@ -36,7 +42,7 @@ export type MyElementSize = 'small' | 'medium' | 'large';
  *
  * @fires custom-event - some description for custom-event
  * @fires {Event} typed-event - some description for typed-event
- * @event {CustomEvent} typed-custom-event - some description for typed-custom-event
+ * @event {MyElementEvent} typed-custom-event - some description for typed-custom-event
  *
  * @summary This is MyElement
  *
@@ -169,5 +175,8 @@ export class MyElement extends LitElement {
 declare global {
   interface HTMLElementTagNameMap {
     'my-element': MyElement
+  }
+  interface HTMLElementEventMap {
+    'my-element-event': MyElementEvent
   }
 }

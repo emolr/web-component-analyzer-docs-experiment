@@ -22,11 +22,23 @@ import type { MyElement } from '@org/elements';
 
 ## Example
 
+<code-example v-pre>
+
+<div>
+<my-element></my-element>
+</div>
+
+```html
+<my-element></my-element>
+```
+
+</code-example>
+
 ### docsHint
 
 Copy for the read the docs hint.
 
-<code-example>
+<code-example v-pre>
 
 <div>
 <my-element docs-hint="Hello"></my-element>
@@ -42,7 +54,7 @@ Copy for the read the docs hint.
 
 The number of times the button has been clicked.
 
-<code-example>
+<code-example v-pre>
 
 <div>
 <my-element count="5"></my-element>
@@ -58,7 +70,7 @@ The number of times the button has been clicked.
 
 Sets the size of the element.
 
-<code-example>
+<code-example v-pre>
 
 <div>
 <my-element size="small"></my-element>
@@ -102,6 +114,14 @@ console.log(document.querySelector("#element-change"));
 | --------- | ------------------------------ |
 |           | This is a default/unnamed slot |
 | container | You can put some elements here |
+
+## Events
+
+| name                 | description                               | type           |
+| -------------------- | ----------------------------------------- | -------------- |
+| custom\-event        | some description for custom\-event        |                |
+| typed\-event         | some description for typed\-event         | Event          |
+| typed\-custom\-event | some description for typed\-custom\-event | MyElementEvent |
 
 ## CSS Custom Properties
 
