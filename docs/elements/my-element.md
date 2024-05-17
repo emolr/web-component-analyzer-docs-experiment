@@ -22,7 +22,7 @@ import type { MyElement } from '@org/elements';
 
 ## Example
 
-<code-example v-pre>
+<code-example>
 
 <div>
 <my-element></my-element>

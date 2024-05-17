@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 custom-elements.json
-.vitepress
+.vitepress/cache

@@ -112,7 +112,7 @@ export default {
 
           ${data.examples?.map(example => {
             return `
-              <code-example v-pre>
+              <code-example>
               ${extractCodeBlock(example.description, 'html').length ? `
                 ${extractCodeBlock(example.description, 'html').map(html => `
                   <div>
