@@ -4,25 +4,43 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "analyze": "custom-elements-manifest analyze --config ./custom-elements.config.js",
+    "analyze:build": "wireit",
     "analyze:dev": "wireit",
     "docs:dev": "wireit",
-    "docs:build": "vitepress build",
-    "docs:preview": "vitepress preview",
+    "docs:build": "wireit",
+    "docs:preview": "wireit",
     "tsc:dev": "wireit",
-    "tsc:build": "wireit"
+    "tsc:build": "wireit",
+    "storybook:dev": "wireit",
+    "storybook:build": "wireit"
   },
   "wireit": {
     "docs:dev": {
-      "command": "vitepress dev",
+      "command": "vitepress dev docs",
       "service": true,
       "dependencies": [
         "analyze:dev",
         "tsc:dev"
       ]
     },
+    "docs:build": {
+      "command": "vitepress build docs",
+      "dependencies": [
+        "analyze:build",
+        "tsc:build"
+      ]
+    },
+    "docs:preview": {
+      "command": "vitepress preview docs",
+      "dependencies": [
+        "docs:build"
+      ]
+    },
+    "analyze:build": {
+      "command": "node ./scripts/cem.js analyze --config ./custom-elements.config.js"
+    },
     "analyze:dev": {
-      "command": "custom-elements-manifest analyze --config ./custom-elements.config.js --watch",
+      "command": "node ./scripts/cem.js analyze --config ./custom-elements.config.js --watch",
       "service": true
     },
     "tsc:dev": {
@@ -31,6 +49,19 @@
     },
     "tsc:build": {
       "command": "tsc"
+    },
+    "storybook:dev": {
+      "command": "storybook dev",
+      "service": true,
+      "dependencies": [
+        "analyze:dev"
+      ]
+    },
+    "storybook:build": {
+      "command": "storybook build",
+      "dependencies": [
+        "analyze:build"
+      ]
     }
   },
   "dependencies": {
@@ -57,7 +88,15 @@
   },
   "devDependencies": {
     "@custom-elements-manifest/analyzer": "^0.9.8",
+    "@storybook/addon-essentials": "^8.1.1",
+    "@storybook/addon-links": "^8.1.1",
+    "@storybook/blocks": "^8.1.1",
+    "@storybook/web-components": "^8.1.1",
+    "@storybook/web-components-vite": "^8.1.1",
     "fast-glob": "^3.3.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "storybook": "^8.1.1",
     "typescript": "^5.2.2",
     "vite": "^5.2.0",
     "vitepress": "^1.1.4"

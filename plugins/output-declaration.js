@@ -12,8 +12,10 @@ export function outputDeclaration(options = { out: './markdown/*.md', clear: fal
         name: 'output-declaration',
         packageLinkPhase({ customElementsManifest }) {
             const baseDir = path.dirname(options.out);
-            const declarations = customElementsManifest.modules.flatMap(module => module.declarations).filter(declaration => declaration.customElement);
-
+            const declarations = customElementsManifest.modules.flatMap(module => 
+                module.declarations.map(declaration => ({ ...declaration, module }))
+              ).filter(declaration => declaration.customElement);
+            
             // Ensure the output directory exists
             if (!fs.existsSync(baseDir)) {
                 fs.mkdirSync(baseDir, { recursive: true });
@@ -30,12 +32,19 @@ export function outputDeclaration(options = { out: './markdown/*.md', clear: fal
             
             declarations.forEach(async declaration => {
                 const formattedContent = await options.templateFn(declaration);
+                
                 const outputPathWithReplacedWildcards = options.out.replaceAll(
                     "*",
                     declaration.tagName,
                 );
 
-                fs.writeFileSync(outputPathWithReplacedWildcards, formattedContent);
+                // Write file if the file does not exist or if the contents of the file are different
+                if (!fs.existsSync(outputPathWithReplacedWildcards) || fs.readFileSync(outputPathWithReplacedWildcards, 'utf8') !== formattedContent) {
+                        console.log(
+                            `Writing declaration to ${outputPathWithReplacedWildcards}`
+                        )
+                        fs.writeFileSync(outputPathWithReplacedWildcards, formattedContent);
+                }
             });
         },
     }

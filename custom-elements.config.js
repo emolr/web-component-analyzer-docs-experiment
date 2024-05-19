@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // https://github.com/bennypowers/cem-plugins/tree/main/plugins/cem-plugin-jsdoc-example
 // import { jsdocExamplePlugin } from 'cem-plugin-jsdoc-example';
 // https://github.com/break-stuff/cem-tools/tree/main/packages/expanded-types#readme
@@ -13,12 +15,12 @@ import { cemInheritancePlugin } from "custom-elements-manifest-inheritance";
 import { customJSDocTagsPlugin } from './plugins/custom-tags.js';
 // import toMarkdownFiles from './plugins/to-markdown-files.js';
 import { outputDeclaration } from './plugins/output-declaration.js';
+import { outputIfChanged } from './plugins/output-if-changed.js';
 // cem plugins
 // https://github.com/break-stuff/cem-tools
 // https://custom-elements-manifest.open-wc.org/analyzer/plugins/intro/
 
 import { format } from 'prettier';
-
 // Custom Elements Manifest Config
 
 // Configuration for the CEM tool that generates a custom-element.json file
@@ -32,13 +34,13 @@ function escapeMarkdown(text) {
   return text.split('').map(char => escapeChars.includes(char) ? '\\' + char : char).join('');
 }
 
-function getMarkdownTable (data, columns) {
-  if (data.length === 0) {
+function getMarkdownTable(data, columns) {
+  if (!data || data?.length === 0) {
     return '';
   }
   const header = '| ' + columns.map(column => typeof column === 'string' ? column : column.name).join(' | ') + ' |';
   const separator = '| ' + columns.map(() => '---').join(' | ') + ' |';
-  
+
   const rows = data.map(item => '| ' + columns.map(column => {
     const key = typeof column === 'string' ? column : column.name;
     const value = item[key] !== undefined ? item[key] : '';
@@ -58,6 +60,7 @@ function extractCodeBlock(content, language) {
 }
 
 function mapAttributeToPropertyTable(data) {
+  if (!data) return [];
   return data
     .filter(item => !item.hasOwnProperty('fieldName')) // filter out objects that contain "fieldName"
     .map(item => ({
@@ -79,14 +82,16 @@ export default {
     "**/test/**",
     "**/*.stories.*",
     "node_modules/*",
+    "**/src/code-example.ts",
+    "**/*.stories.ts",
   ],
   outdir: ".",
   litelement: true,
   packagejson: false,
   plugins: [
     expandTypesPlugin(),
-    moduleFileExtensionsPlugin(),
-    cemInheritancePlugin(),
+    // moduleFileExtensionsPlugin(),
+    // cemInheritancePlugin(),
     customJSDocTagsPlugin({
       tags: {
         example: {
@@ -94,6 +99,54 @@ export default {
           isArray: true
         },
         usage: {}
+      }
+    }),
+    outputDeclaration({
+      out: './src/stories/*.stories.ts',
+      clear: false,
+      templateFn: async (data) => {
+        const storyTemplate = `
+          import type { Meta, StoryObj } from "@storybook/web-components";
+          import { html } from "lit";
+          import type { ${data.name} } from "../../${data.module.path}";
+          import "../../${data.module.path}";
+          
+          const meta = {
+            title: "Elements/${data.name}",
+            component: "${data.tagName}",
+            tags: ["autodocs"],
+            argTypes: {},
+          } satisfies Meta<${data.name}>;
+          
+          export default meta;
+          
+          type Story = StoryObj<${data.name}>;
+
+          ${data.examples ? data.examples?.map((example) => extractCodeBlock(example.description, 'html').map((html, i) => `
+            export const Default${i > 0 ? i : ''}: Story = {
+              render: () => {
+                return html\`
+                  ${html}
+                \`;
+              },
+            };
+          `).join('\n')).join('\n') : ''}
+
+          ${data.members ? data.members?.filter(member => member.kind === 'field').map(member => {
+            return member.examples?.map((example) => extractCodeBlock(example.description, 'html').map((html, i) => `
+                export const ${member.name}${i > 0 ? i : ''}: Story = {
+                  render: () => {
+                    return html\`
+                      ${html}
+                    \`;
+                  }
+                }
+              `).join('\n')).join('\n');
+          }).join('\n') : ''}
+        `;
+        
+        const formattedStoryTemplate = format(storyTemplate, { parser: 'typescript' });
+        return formattedStoryTemplate 
       }
     }),
     outputDeclaration({
@@ -108,10 +161,10 @@ export default {
           ${data.usage ? '## Usage' : ''}
           ${data.usage ? data.usage.description : ''}
 
-          ${data.members.filter(member => member.kind === 'field').length > 0 || data.examples?.length > 0 ? '## Example' : ''}
+          ${data.members?.filter(member => member.kind === 'field').length > 0 || data.examples?.length > 0 ? '## Example' : ''}
 
           ${data.examples?.map(example => {
-            return `
+          return `
               <code-example>
               ${extractCodeBlock(example.description, 'html').length ? `
                 ${extractCodeBlock(example.description, 'html').map(html => `
@@ -132,14 +185,14 @@ export default {
 
               </code-example>
             `
-          }).join('\n')}
+        }).join('\n') ?? ''}
 
-          ${data.members.filter(member => member.kind === 'field').map(member => `
+          ${data.members?.filter(member => member.kind === 'field').map(member => `
             ### ${member.name}
             ${member.description}
 
             ${member.examples ? member.examples.map(example => {
-              return `
+          return `
                 <code-example v-pre>
                 ${extractCodeBlock(example.description, 'html').length ? `
                   ${extractCodeBlock(example.description, 'html').map(html => `
@@ -160,44 +213,44 @@ export default {
 
                 </code-example>
               `
-            }).join('\n') : ''}
-          `).join('\n')}
+        }).join('\n') : ''}
+          `).join('\n') ?? ''}
 
-          ${data.members.length > 0 ? '## Properties / Attributes' : ''}
-          ${getMarkdownTable([...data.members, ...mapAttributeToPropertyTable(data.attributes)], ['name', 'attribute', {
-            name: 'type',
-            value: column => {
-              return column.expandedType ? column.expandedType.text : column.type?.text;
-            }
-          }, 'default', 'description'])}
+          ${data.members?.length > 0 || data.attributes?.length > 0 ? '## Properties / Attributes' : ''}
+          ${getMarkdownTable([...data.members ?? [], ...mapAttributeToPropertyTable(data.attributes ?? [])], ['name', 'attribute', {
+          name: 'type',
+          value: column => {
+            return column.expandedType ? column.expandedType.text : column.type?.text;
+          }
+        }, 'default', 'description'])}
 
-          ${data.slots.length > 0 ? '## CSS Slots' : ''}
+          ${data.slots?.length > 0 ? '## CSS Slots' : ''}
           ${getMarkdownTable(data.slots, ['name', 'description'])}
 
-          ${data.events.length > 0 ? '## Events' : ''}
+          ${data.events?.length > 0 ? '## Events' : ''}
           ${getMarkdownTable(data.events, ['name', 'description', { name: 'type', value: column => column.type?.text }])}
 
-          ${data.cssProperties.length > 0 ? '## CSS Custom Properties' : ''}
+          ${data.cssProperties?.length > 0 ? '## CSS Custom Properties' : ''}
           ${getMarkdownTable(data.cssProperties, ['name', 'description', 'default'])}
 
-          ${data.cssParts.length > 0 ? '## CSS Parts' : ''}
+          ${data.cssParts?.length > 0 ? '## CSS Parts' : ''}
           ${getMarkdownTable(data.cssParts, ['name', 'description'])}
 
         `;
 
-        
+
         // Remove leading white spaces from each line
         content = content.split('\n').map(line => line.trimStart()).join('\n');
-        
+
         // Remove multiple empty lines
         content = content.replace(/\n{3,}/g, '\n\n');
-        
+
         const formattedContent = await format(content, { parser: 'markdown' });
 
         return formattedContent;
       },
-    })
-
+    }),
+    outputIfChanged()
   ],
   overrideModuleCreation: ({ ts, globs }) => {
     const program = getTsProgram(ts, globs, "tsconfig.json");
